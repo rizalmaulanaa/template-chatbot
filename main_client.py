@@ -9,12 +9,16 @@ from fastapi import FastAPI, Request, status
 
 from routers import all_router
 from constants.log import LOGGER
+from constants.mcp_setup import setup_agent
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     app.context = {}
+    
+    agents = await setup_agent()
+    app.context["agents"] = agents
     
     # Startup
     LOGGER.info("Starting FastAPI application")
