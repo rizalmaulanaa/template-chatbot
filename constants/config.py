@@ -8,6 +8,10 @@ def parse_value(value: str):
         return json.loads(value)
     except (json.JSONDecodeError, TypeError):
         return value
+    
+def split_string(value: str, delimiter: str = ","):
+    """Split a string by delimiter into a list."""
+    return [item.strip() for item in value.split(delimiter) if item.strip()]
 
 def all_env_variables(prefix: str = None):
     """
@@ -22,4 +26,15 @@ def all_env_variables(prefix: str = None):
             if k.startswith(prefix)
         }
     
-    return {k.lower(): parse_value(v) for k, v in env_dict.items()}
+    return {k: parse_value(v) for k, v in env_dict.items()}
+
+MCP_CONFIG = all_env_variables(prefix="MCP_")
+MCP_TOOLS = all_env_variables(prefix="MCP_TOOLS__")
+MCP_TOOLS = {k: split_string(v) for k, v in MCP_TOOLS.items()}
+
+MCP_SERVER_LIST = {
+    "ticketing": {
+        "transport": "sse",
+        "url": MCP_CONFIG.get("SERVER_URL"), 
+    }
+}

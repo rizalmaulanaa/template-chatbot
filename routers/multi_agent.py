@@ -2,11 +2,10 @@ import uuid
 
 from typing import Dict
 from langchain.messages import HumanMessage, AIMessage, ToolMessage
-# from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from fastapi import APIRouter, HTTPException, Request, Depends
 
-from utils.helpers import parse_response
 from constants.params import ChatbotParams
+from services.agent_manager import make_graph
 
 
 multi_agent_router = APIRouter(
@@ -15,19 +14,9 @@ multi_agent_router = APIRouter(
     prefix="/multi-agent"
 )
 
-def get_manager(request: Request):
-    """Dependency to get manager from app context"""
-    if not hasattr(request.app, 'context') or 'agents' not in request.app.context:
-        raise HTTPException(
-            status_code=503,
-            detail="Service Manager not available"
-        )
-    return request.app.context['agents']
-
 @multi_agent_router.post("/generate-answer")
 async def generate_answer(
-    payload: ChatbotParams,
-    agents: Dict = Depends(get_manager)
+    payload: ChatbotParams
 ):
     run_id = str(uuid.uuid4())
     
@@ -46,7 +35,7 @@ async def generate_answer(
         #     "run_id" : run_id,
         # }
         
-        chatbot_graph = agents['main_agent']
+        chatbot_graph = await make_graph()
         response = await chatbot_graph.ainvoke(
             {"messages": [{"role": "user", "content": payload.query}]}
         )
