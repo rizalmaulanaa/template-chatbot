@@ -17,8 +17,9 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     app.context = {}
     
-    agents = await setup_agent()
+    agents, tools = await setup_agent()
     app.context["agents"] = agents
+    app.context["tools"] = tools
     
     # Startup
     LOGGER.info("Starting FastAPI application")
