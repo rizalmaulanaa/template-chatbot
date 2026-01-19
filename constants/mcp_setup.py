@@ -24,5 +24,5 @@ async def setup_agent():
         )
         
         all_agents[agent_name] = agent
-
-    return all_agents
+    
+    return all_agents, tools
