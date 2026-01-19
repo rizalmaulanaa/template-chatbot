@@ -1,6 +1,8 @@
 import os
 import json
 
+from langfuse.langchain import CallbackHandler
+
 
 def parse_value(value: str):
     """Try to parse string into Python type (int, float, bool, list, dict)."""
@@ -38,3 +40,11 @@ MCP_SERVER_LIST = {
         "url": MCP_CONFIG.get("SERVER_URL"), 
     }
 }
+
+MIDDLEWARE_LIST_TOOLS = {
+    "create_ticket": "Create a new ticket in the ticketing system", 
+    "update_ticket": "Update an existing ticket in the ticketing system",
+    "delete_ticket": "Delete a ticket from the ticketing system",
+}
+
+LANGFUSE_HANDLER = CallbackHandler()

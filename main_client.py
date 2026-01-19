@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request, status
 from routers import all_router
 from constants.log import LOGGER
 from constants.mcp_setup import setup_agent
+from services.agent_manager import make_graph_supervisor, make_graph_single
 
 
 @asynccontextmanager
@@ -18,8 +19,13 @@ async def lifespan(app: FastAPI):
     app.context = {}
     
     agents, tools = await setup_agent()
+    single_agent = await make_graph_single(tools)
+    supervisor_agent = await make_graph_supervisor()
+    
     app.context["agents"] = agents
     app.context["tools"] = tools
+    app.context["single_agent"] = single_agent
+    app.context["supervisor_agent"] = supervisor_agent
     
     # Startup
     LOGGER.info("Starting FastAPI application")
