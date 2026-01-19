@@ -8,16 +8,18 @@ from services.subagents.update_agent import modify_agents
 from constants.prompt import SUPERVISOR_SYSTEM_TEMPLATE, SINGLE_AGENT_SYSTEM_TEMPLATE
     
     
-async def make_graph():
+async def make_graph_supervisor():
     """
     Create the supervisor agent that routes requests to appropriate sub-agents.
     """
     model = get_model()
+    checkpointer = InMemorySaver()
     
     supervisor = create_agent(
         model,
         tools=[ask_agents, create_agents, modify_agents],
-        system_prompt=SUPERVISOR_SYSTEM_TEMPLATE
+        system_prompt=SUPERVISOR_SYSTEM_TEMPLATE,
+        checkpointer=checkpointer
     )
     
     return supervisor

@@ -5,7 +5,7 @@ from langchain.messages import HumanMessage, AIMessage, ToolMessage
 from fastapi import APIRouter, HTTPException, Request, Depends
 
 from constants.params import ChatbotParams
-from services.agent_manager import make_graph
+from services.agent_manager import make_graph_supervisor
 
 
 multi_agent_router = APIRouter(
@@ -21,23 +21,18 @@ async def generate_answer(
     run_id = str(uuid.uuid4())
     
     try:
-        # current_state = {
-        #     "query": payload.query,
-        #     "messages": HumanMessage(payload.query)
-        # }
-        # config = {
-        #     "configurable": {
-        #         "thread_id": payload.session_id,
-        #         "index_": payload.index_,
-        #         "limit_docs": payload.limit_docs
-        #     },
-        #     "run_name" : f"{payload.session_id}_{run_id}",
-        #     "run_id" : run_id,
-        # }
+        config = {
+            "configurable": {
+                "thread_id": payload.session_id,
+            },
+            "run_name" : f"{payload.session_id}_{run_id}",
+            "run_id" : run_id,
+        }
         
-        chatbot_graph = await make_graph()
+        chatbot_graph = await make_graph_supervisor()
         response = await chatbot_graph.ainvoke(
-            {"messages": [{"role": "user", "content": payload.query}]}
+            {"messages": [{"role": "user", "content": payload.query}]},
+            config=config
         )
         
         final_ai_message = next(
