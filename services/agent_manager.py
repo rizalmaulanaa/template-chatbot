@@ -20,6 +20,7 @@ async def make_graph_supervisor():
     supervisor = create_agent(
         model,
         tools=[ask_agents, create_agents, modify_agents],
+        name="supervisor",
         system_prompt=SUPERVISOR_SYSTEM_TEMPLATE,
         checkpointer=checkpointer
     )

@@ -1,8 +1,10 @@
+import json
 import uuid
 
 from typing import Dict
 from langgraph.types import Command
 from langchain.messages import AIMessage
+from fastapi.responses import StreamingResponse
 from langgraph.graph.state import CompiledStateGraph
 from fastapi import APIRouter, HTTPException, Request, Depends
 
@@ -132,4 +134,134 @@ async def continue_answer(
         return {
             "status": "error",
             "data": {"final_answer" : f"Found error with {e}"}
+        }
+        
+async def chat_stream_generator(
+    payload: ChatbotParams, 
+    supervisor_agent: CompiledStateGraph
+):
+    run_id = str(uuid.uuid4())
+    
+    config = {
+        "configurable": {
+            "thread_id": payload.session_id,
+        },
+        "run_name": f"{payload.session_id}_{run_id}",
+        "run_id": run_id,
+        "callbacks": [LANGFUSE_HANDLER],
+    }
+    current_agent = None
+    
+    async for _, mode_stream, chunk in supervisor_agent.astream( 
+        {"messages": [{"role": "user", "content": payload.query}]},
+        config,
+        stream_mode=["messages", "updates"],
+        subgraphs=True,
+    ):
+        if mode_stream == "messages":
+            message_chunk, metadata  = chunk
+            if agent_name := metadata.get("lc_agent_name"):  
+                if agent_name != current_agent:  
+                    current_agent = agent_name
+                    
+            chunk_data = {
+                "type": current_agent or metadata['langgraph_node'],
+                "content": message_chunk.content
+            }
+            yield f"data: {json.dumps(chunk_data)}\n\n" 
+        else:
+            if "__interrupt__" in chunk:
+                chunk_data = {
+                    "type": "interrupt",
+                    "content": "interrupt received"
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+        
+async def continue_stream_generator(
+    payload: ChatbotParams, 
+    supervisor_agent: CompiledStateGraph
+):
+    run_id = str(uuid.uuid4())
+    
+    config = {
+        "configurable": {
+            "thread_id": payload.session_id,
+        },
+        "run_name": f"{payload.session_id}_{run_id}",
+        "run_id": run_id,
+        "callbacks": [LANGFUSE_HANDLER],
+    }
+    current_agent = None
+    
+    async for _, mode_stream, chunk in supervisor_agent.astream( 
+        Command( 
+            resume={"decisions": [{"type": payload.query}]}
+        ),
+        config,
+        stream_mode=["messages", "updates"],
+        subgraphs=True,
+    ):
+        if mode_stream == "messages":
+            message_chunk, metadata  = chunk
+            if agent_name := metadata.get("lc_agent_name"):  
+                if agent_name != current_agent:  
+                    current_agent = agent_name
+                    
+            chunk_data = {
+                "type": current_agent or metadata['langgraph_node'],
+                "content": message_chunk.content
+            }
+            yield f"data: {json.dumps(chunk_data)}\n\n" 
+        else:
+            if "__interrupt__" in chunk:
+                chunk_data = {
+                    "type": "interrupt",
+                    "content": "interrupt received"
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+        
+@multi_agent_router.post("/stream/generate-answer")
+async def stream_generate_answer(
+    payload: ChatbotParams,
+    supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
+):
+    try:
+        return StreamingResponse(
+            chat_stream_generator(
+                payload=payload,
+                supervisor_agent=supervisor_agent
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        ) 
+    except Exception as e:
+        return {
+            "response" : f"Error found at system with message : {e}",
+            "code" : "400"
+        }
+        
+@multi_agent_router.post("/stream/continue-answer")
+async def stream_continue_answer(
+    payload: ChatbotParams,
+    supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
+):
+    try:
+        return StreamingResponse(
+            continue_stream_generator(
+                payload=payload,
+                supervisor_agent=supervisor_agent
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        ) 
+    except Exception as e:
+        return {
+            "response" : f"Error found at system with message : {e}",
+            "code" : "400"
         }

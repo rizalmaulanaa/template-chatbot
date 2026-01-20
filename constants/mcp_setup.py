@@ -75,6 +75,7 @@ async def setup_agent():
         agent = create_agent(
             model, 
             tools=used_tools,
+            name=f"{agent_name.lower()}_agent",
             system_prompt=f"You are a {agent_name.lower()} agent.",
             middleware=middlewares
         )

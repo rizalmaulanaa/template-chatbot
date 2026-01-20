@@ -170,29 +170,6 @@ async def chat_stream_generator(
                 }
                 yield f"data: {json.dumps(chunk_data)}\n\n"
         
-@single_agent_router.post("/stream/generate-answer")
-async def stream_generate_answer(
-    payload: ChatbotParams,
-    single_agent: CompiledStateGraph = Depends(get_single_agent)
-):
-    try:
-        return StreamingResponse(
-            chat_stream_generator(
-                payload=payload,
-                single_agent=single_agent
-            ),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-            }
-        ) 
-    except Exception as e:
-        return {
-            "response" : f"Error found at system with message : {e}",
-            "code" : "400"
-        }
-        
 async def continue_stream_generator(
     payload: ChatbotParams, 
     single_agent: CompiledStateGraph
@@ -229,6 +206,29 @@ async def continue_stream_generator(
                     "content": "interrupt received"
                 }
                 yield f"data: {json.dumps(chunk_data)}\n\n"
+        
+@single_agent_router.post("/stream/generate-answer")
+async def stream_generate_answer(
+    payload: ChatbotParams,
+    single_agent: CompiledStateGraph = Depends(get_single_agent)
+):
+    try:
+        return StreamingResponse(
+            chat_stream_generator(
+                payload=payload,
+                single_agent=single_agent
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        ) 
+    except Exception as e:
+        return {
+            "response" : f"Error found at system with message : {e}",
+            "code" : "400"
+        }
         
 @single_agent_router.post("/stream/continue-answer")
 async def stream_continue_answer(
