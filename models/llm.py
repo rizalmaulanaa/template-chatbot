@@ -13,6 +13,7 @@ def get_model():
         max_tokens=None,
         timeout=None,
         max_retries=2,
+        streaming=True,
     )
     return llm
 
