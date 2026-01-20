@@ -1,8 +1,10 @@
+import json
 import uuid
 
 from typing import List
 from langgraph.types import Command
 from langchain.messages import AIMessage
+from fastapi.responses import StreamingResponse
 from langgraph.graph.state import CompiledStateGraph
 from fastapi import APIRouter, HTTPException, Request, Depends
 
@@ -131,4 +133,122 @@ async def continue_answer(
         return {
             "status": "error",
             "data": {"final_answer" : f"Found error with {e}"}
+        }
+        
+async def chat_stream_generator(
+    payload: ChatbotParams, 
+    single_agent: CompiledStateGraph
+):
+    run_id = str(uuid.uuid4())
+    
+    config = {
+        "configurable": {
+            "thread_id": payload.session_id,
+        },
+        "run_name": f"{payload.session_id}_{run_id}",
+        "run_id": run_id,
+        "callbacks": [LANGFUSE_HANDLER],
+    }
+    
+    async for mode_stream, chunk in single_agent.astream( 
+        {"messages": [{"role": "user", "content": payload.query}]},
+        config,
+        stream_mode=["messages", "updates"],
+    ):
+        if mode_stream == "messages":
+            message_chunk, metadata  = chunk
+            chunk_data = {
+                "type": metadata['langgraph_node'],
+                "content": message_chunk.content
+            }
+            yield f"data: {json.dumps(chunk_data)}\n\n" 
+        else:
+            if "__interrupt__" in chunk:
+                chunk_data = {
+                    "type": "interrupt",
+                    "content": "interrupt received"
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+        
+@single_agent_router.post("/stream/generate-answer")
+async def stream_generate_answer(
+    payload: ChatbotParams,
+    single_agent: CompiledStateGraph = Depends(get_single_agent)
+):
+    try:
+        return StreamingResponse(
+            chat_stream_generator(
+                payload=payload,
+                single_agent=single_agent
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        ) 
+    except Exception as e:
+        return {
+            "response" : f"Error found at system with message : {e}",
+            "code" : "400"
+        }
+        
+async def continue_stream_generator(
+    payload: ChatbotParams, 
+    single_agent: CompiledStateGraph
+):
+    run_id = str(uuid.uuid4())
+    
+    config = {
+        "configurable": {
+            "thread_id": payload.session_id,
+        },
+        "run_name": f"{payload.session_id}_{run_id}",
+        "run_id": run_id,
+        "callbacks": [LANGFUSE_HANDLER],
+    }
+    
+    async for mode_stream, chunk in single_agent.astream( 
+        Command( 
+            resume={"decisions": [{"type": payload.query}]}
+        ),
+        config,
+        stream_mode=["messages", "updates"],
+    ):
+        if mode_stream == "messages":
+            message_chunk, metadata  = chunk
+            chunk_data = {
+                "type": metadata['langgraph_node'],
+                "content": message_chunk.content
+            }
+            yield f"data: {json.dumps(chunk_data)}\n\n" 
+        else:
+            if "__interrupt__" in chunk:
+                chunk_data = {
+                    "type": "interrupt",
+                    "content": "interrupt received"
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+        
+@single_agent_router.post("/stream/continue-answer")
+async def stream_continue_answer(
+    payload: ChatbotParams,
+    single_agent: CompiledStateGraph = Depends(get_single_agent)
+):
+    try:
+        return StreamingResponse(
+            continue_stream_generator(
+                payload=payload,
+                single_agent=single_agent
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        ) 
+    except Exception as e:
+        return {
+            "response" : f"Error found at system with message : {e}",
+            "code" : "400"
         }
