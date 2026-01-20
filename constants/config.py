@@ -1,8 +1,11 @@
 import os
 import json
 
+from pathlib import Path
 from langfuse.langchain import CallbackHandler
 
+from constants.params import Skill
+from utils.helpers import read_skill_md
 
 def parse_value(value: str):
     """Try to parse string into Python type (int, float, bool, list, dict)."""
@@ -30,6 +33,9 @@ def all_env_variables(prefix: str = None):
     
     return {k: parse_value(v) for k, v in env_dict.items()}
 
+PATH = (Path(__file__)).resolve()
+PATH = '/'.join(str(PATH).split('/')[:-2])
+
 MCP_CONFIG = all_env_variables(prefix="MCP_")
 MCP_TOOLS = all_env_variables(prefix="MCP_TOOLS__")
 MCP_TOOLS = {k: split_string(v) for k, v in MCP_TOOLS.items()}
@@ -48,3 +54,14 @@ MIDDLEWARE_LIST_TOOLS = {
 }
 
 LANGFUSE_HANDLER = CallbackHandler()
+
+SKILLS = [
+    {
+        "name": "ticketing_system",
+        "description": "Database schema and business logic for ticketing system including ticket management, priorities, and status tracking.",
+    }
+]
+
+for skill in SKILLS:
+    path_skill_md = f"{PATH}/services/skills/{skill['name']}.md"
+    skill["content"] = read_skill_md(path_skill_md)

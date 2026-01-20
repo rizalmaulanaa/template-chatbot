@@ -3,8 +3,8 @@ from langchain.agents.middleware import HumanInTheLoopMiddleware
 
 from models.llm import get_model
 from langchain.agents import create_agent
-from constants.mcp_setup import get_middlewares
 from services.subagents.ask_agent import ask_agents
+from services.middlewares.compile import get_middlewares
 from services.subagents.create_agent import create_agents
 from services.subagents.update_agent import modify_agents
 from constants.prompt import SUPERVISOR_SYSTEM_TEMPLATE, SINGLE_AGENT_SYSTEM_TEMPLATE

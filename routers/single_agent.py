@@ -78,6 +78,13 @@ async def generate_answer(
                     "requires_approval": True
                 }
             }
+            
+        # # Print the conversation
+        # for message in response["messages"]:
+        #     if hasattr(message, 'pretty_print'):
+        #         message.pretty_print()
+        #     else:
+        #         print(f"{message.type}: {message.content}")
         
         if not final_ai_message:
             return {
