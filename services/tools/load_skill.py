@@ -2,6 +2,7 @@ from langchain.tools import tool
 
 from constants.config import SKILLS
 
+
 @tool
 def load_skill(skill_name: str) -> str:
     """Load the full content of a skill into the agent's context.

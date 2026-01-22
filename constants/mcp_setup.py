@@ -1,10 +1,11 @@
-from typing import List
-
-from constants.log import LOGGER
+from typing import List, Union, Dict
+from langchain.tools import BaseTool
 from langchain.agents import create_agent
+from langgraph.graph.state import CompiledStateGraph
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest
 
+from constants.log import LOGGER
 from models.llm import get_model
 from utils.helpers import split_agent_tools
 from constants.config import MCP_SERVER_LIST, MCP_TOOLS
@@ -24,7 +25,7 @@ async def logging_interceptor(
     
     return result
 
-async def setup_agent():
+async def setup_agent() -> Union[Dict[str, CompiledStateGraph], List[BaseTool]]:
     global all_agents
     
     client = MultiServerMCPClient(

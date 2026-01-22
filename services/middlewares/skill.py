@@ -5,6 +5,7 @@ from langchain.agents.middleware import ModelRequest, ModelResponse, AgentMiddle
 from constants.config import SKILLS
 from services.tools.load_skill import load_skill
 
+
 class SkillMiddleware(AgentMiddleware):  
     """Middleware that injects skill descriptions into the system prompt."""
 

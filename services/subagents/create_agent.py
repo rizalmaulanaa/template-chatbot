@@ -1,4 +1,5 @@
 from langchain.tools import tool
+from langgraph.graph.state import CompiledStateGraph
 
 from constants.mcp_setup import all_agents
 from constants.prompt import CREATE_AGENT_PROMPT
@@ -39,7 +40,7 @@ async def create_agents(query: str) -> str:
     Returns:
         Confirmation message with the created ticket ID and details
     """
-    agent = all_agents.get('CREATE')
+    agent: CompiledStateGraph = all_agents.get('CREATE')
     prompt = CREATE_AGENT_PROMPT.invoke(
         {"query": query}
     )

@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from typing import Dict
+from typing import Dict, Any
 from langgraph.types import Command
 from langchain.messages import AIMessage
 from fastapi.responses import StreamingResponse
@@ -19,7 +19,7 @@ multi_agent_router = APIRouter(
     prefix="/multi-agent"
 )
 
-def get_supervisor_agent(request: Request):
+def get_supervisor_agent(request: Request) -> CompiledStateGraph:
     """Dependency to get tools from app context"""
     if not hasattr(request.app, 'context') or 'supervisor_agent' not in request.app.context:
         raise HTTPException(
@@ -28,12 +28,11 @@ def get_supervisor_agent(request: Request):
         )
     return request.app.context['supervisor_agent']
 
-
 @multi_agent_router.post("/generate-answer")
 async def generate_answer(
     payload: ChatbotParams,
     supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
-):
+) -> Dict[str, Any]:
     run_id = str(uuid.uuid4())
     
     try:
@@ -88,7 +87,7 @@ async def generate_answer(
                     
         return {
             "status": "success",
-            "data": final_ai_message.content
+            "data": {"final_answer": final_ai_message.content}
         }
     except Exception as e:
         LOGGER.error(f"Error in generate_answer: {e}", exc_info=True)
@@ -101,7 +100,7 @@ async def generate_answer(
 async def continue_answer(
     payload: ChatbotParams,
     supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
-):
+) -> Dict[str, Any]:
     run_id = str(uuid.uuid4())
     
     try:
@@ -128,7 +127,7 @@ async def continue_answer(
                     
         return {
             "status": "success",
-            "data": final_ai_message.content
+            "data": {"final_answer": final_ai_message.content}
         }
     except Exception as e:
         return {
@@ -224,7 +223,7 @@ async def continue_stream_generator(
 async def stream_generate_answer(
     payload: ChatbotParams,
     supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
-):
+) -> StreamingResponse:
     try:
         return StreamingResponse(
             chat_stream_generator(
@@ -247,7 +246,7 @@ async def stream_generate_answer(
 async def stream_continue_answer(
     payload: ChatbotParams,
     supervisor_agent: CompiledStateGraph = Depends(get_supervisor_agent)
-):
+) -> StreamingResponse:
     try:
         return StreamingResponse(
             continue_stream_generator(

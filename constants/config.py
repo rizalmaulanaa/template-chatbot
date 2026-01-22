@@ -2,23 +2,24 @@ import os
 import json
 
 from pathlib import Path
+from typing import Any, Dict, List
 from langfuse.langchain import CallbackHandler
 
-from constants.params import Skill
 from utils.helpers import read_skill_md
 
-def parse_value(value: str):
+
+def parse_value(value: str) -> Any:
     """Try to parse string into Python type (int, float, bool, list, dict)."""
     try:
         return json.loads(value)
     except (json.JSONDecodeError, TypeError):
         return value
     
-def split_string(value: str, delimiter: str = ","):
+def split_string(value: str, delimiter: str = ",") -> List[str]:
     """Split a string by delimiter into a list."""
     return [item.strip() for item in value.split(delimiter) if item.strip()]
 
-def all_env_variables(prefix: str = None):
+def all_env_variables(prefix: str = None) -> Dict[str, Any]:
     """
     Get all environment variables. 
     If prefix is provided, filter by it and strip the prefix from keys.

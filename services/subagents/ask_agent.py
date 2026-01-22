@@ -1,4 +1,5 @@
 from langchain.tools import tool
+from langgraph.graph.state import CompiledStateGraph
 
 from constants.mcp_setup import all_agents
 from constants.prompt import ASK_AGENT_PROMPT
@@ -33,7 +34,7 @@ async def ask_agents(query: str) -> str:
     Returns:
         The ticket information or list of tickets
     """
-    agent = all_agents.get('ASK')
+    agent: CompiledStateGraph = all_agents.get('ASK')
     prompt = ASK_AGENT_PROMPT.invoke(
         {"query": query}
     )
