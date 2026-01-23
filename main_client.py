@@ -3,14 +3,13 @@ import uvicorn
 import traceback
 
 from typing import Dict
+from fastapi import FastAPI, status
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request, status
 
 from routers import all_router
 from constants.log import LOGGER
-from constants.mcp_setup import setup_agent
-from services.agent_manager import make_graph_supervisor, make_graph_single
+from services.agent_manager import make_graph_single
 
 
 @asynccontextmanager
@@ -18,14 +17,7 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     app.context = {}
     
-    agents, tools = await setup_agent()
-    single_agent = await make_graph_single(tools)
-    supervisor_agent = await make_graph_supervisor()
-    
-    app.context["agents"] = agents
-    app.context["tools"] = tools
-    app.context["single_agent"] = single_agent
-    app.context["supervisor_agent"] = supervisor_agent
+    app.context["single_agent"] = await make_graph_single()
     
     # Startup
     LOGGER.info("Starting FastAPI application")

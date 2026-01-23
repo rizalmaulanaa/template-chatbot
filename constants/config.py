@@ -3,7 +3,6 @@ import json
 
 from pathlib import Path
 from typing import Any, Dict, List
-from langfuse.langchain import CallbackHandler
 
 from utils.helpers import read_skill_md
 
@@ -37,24 +36,7 @@ def all_env_variables(prefix: str = None) -> Dict[str, Any]:
 PATH = (Path(__file__)).resolve()
 PATH = '/'.join(str(PATH).split('/')[:-2])
 
-MCP_CONFIG = all_env_variables(prefix="MCP_")
-MCP_TOOLS = all_env_variables(prefix="MCP_TOOLS__")
-MCP_TOOLS = {k: split_string(v) for k, v in MCP_TOOLS.items()}
-
-MCP_SERVER_LIST = {
-    "ticketing": {
-        "transport": "sse",
-        "url": MCP_CONFIG.get("SERVER_URL"), 
-    }
-}
-
-MIDDLEWARE_LIST_TOOLS = {
-    "create_ticket": "Create a new ticket in the ticketing system", 
-    "update_ticket": "Update an existing ticket in the ticketing system",
-    "delete_ticket": "Delete a ticket from the ticketing system",
-}
-
-LANGFUSE_HANDLER = CallbackHandler()
+MIDDLEWARE_LIST_TOOLS = {}
 
 SKILLS = [
     {

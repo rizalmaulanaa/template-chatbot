@@ -10,7 +10,6 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 
 from constants.log import LOGGER
 from constants.params import ChatbotParams
-from constants.config import LANGFUSE_HANDLER
 
 
 single_agent_router = APIRouter(
@@ -42,7 +41,6 @@ async def generate_answer(
             },
             "run_name": f"{payload.session_id}_{run_id}",
             "run_id": run_id,
-            "callbacks": [LANGFUSE_HANDLER],
         }
 
         response = await single_agent.ainvoke(
@@ -117,7 +115,6 @@ async def continue_answer(
             },
             "run_name" : f"{payload.session_id}_{run_id}",
             "run_id" : run_id,
-            "callbacks" : [LANGFUSE_HANDLER],
         }
 
         response = await single_agent.ainvoke(
@@ -154,7 +151,6 @@ async def chat_stream_generator(
         },
         "run_name": f"{payload.session_id}_{run_id}",
         "run_id": run_id,
-        "callbacks": [LANGFUSE_HANDLER],
     }
     
     async for mode_stream, chunk in single_agent.astream( 
@@ -189,7 +185,6 @@ async def continue_stream_generator(
         },
         "run_name": f"{payload.session_id}_{run_id}",
         "run_id": run_id,
-        "callbacks": [LANGFUSE_HANDLER],
     }
     
     async for mode_stream, chunk in single_agent.astream( 
