@@ -1,120 +1,136 @@
-# MCP Ticketing System Client
+# FastAPI Chatbot Template
 
-A FastAPI-based ticketing system client that leverages the Model Context Protocol (MCP), LangChain, and LangGraph to provide intelligent ticket management through AI agents.
+A minimal yet extensible template for building production-ready chatbots using **FastAPI**, **Uvicorn**, and **LangChain**.
 
-## Overview
+Use this repository as a starting point to quickly spin up an LLM-powered chatbot API (for support bots, internal assistants, FAQ bots, etc.) and customize the behavior with LangChain chains, tools, and memory.
 
-This project implements an AI-powered ticketing system that uses:
-- **MCP (Model Context Protocol)** for server-side tool integration
-- **LangChain** for LLM orchestration and tool calling
-- **LangGraph** for agent state management and workflows
-- **FastAPI** for REST API endpoints with streaming support
-- **Langfuse** for observability and monitoring
+## Features
 
-The system supports both single-agent and multi-agent (supervisor) architectures, with capabilities for creating, reading, updating, and deleting tickets through natural language interactions.
-
-> **Related Repository**: For the MCP server-side implementation, see [mcp-server](https://github.com/project-anak-muda/mcp-server)
-
-## Architecture
-
-### Agent Types
-
-#### Single Agent
-A unified agent that handles all ticket operations directly using available MCP tools.
-
-**Capabilities:**
-- Direct access to all ticketing tools
-- Memory persistence via checkpointer
-- Streaming responses
-- Tool approval workflow with interrupts
-
-#### Multi-Agent (Supervisor)
-A supervisor agent that routes requests to specialized sub-agents:
-- **Ask Agent**: Retrieves and queries ticket information
-- **Create Agent**: Creates new tickets
-- **Modify Agent**: Updates and deletes existing tickets
-
-### Key Features
-
-✅ **Natural Language Interface**: Interact with the ticketing system using plain English  
-✅ **Streaming Responses**: Real-time streaming of agent responses via Server-Sent Events (SSE)  
-✅ **Tool Approval Workflow**: Optional human-in-the-loop for sensitive operations  
-✅ **Session Management**: Thread-based conversation persistence  
-✅ **Observability**: Full tracing with Langfuse integration  
-✅ **Middleware Support**: Custom interceptors for tool calls (logging, validation, approval)  
+- 🚀 **FastAPI + Uvicorn** for high‑performance async APIs
+- 🧠 **LangChain** for LLM orchestration, tools, and memory
+- 💬 **Chat endpoint** ready to plug into a frontend (web / mobile / Slack / etc.)
+- 🧩 Pluggable prompt templates and chains
+- 🧵 Optional conversational memory per user/session
+- 🔧 Simple configuration via environment variables
 
 ## Project Structure
 
-```
-mcp-client/
-├── main_client.py              # FastAPI application entry point
-├── constants/
-│   ├── config.py               # Configuration and environment variables
-│   ├── log.py                  # Logging setup
-│   ├── mcp_setup.py            # MCP client initialization
-│   ├── params.py               # Request/response models
-│   └── prompt.py               # System prompts for agents
-├── models/
-│   └── llm.py                  # LLM model configuration
-├── routers/
-│   ├── single_agent.py         # Single agent endpoints
-│   └── multi_agent.py          # Multi-agent supervisor endpoints
-├── services/
-│   ├── agent_manager.py        # Agent creation and management
-│   ├── middlewares/            # Tool call interceptors
-│   ├── subagents/              # Specialized sub-agents
-│   └── skills/                 # Domain knowledge (*.md files)
-└── utils/
-    └── helpers.py              # Utility functions
+```text
+template-chatbot/
+├── main.py              # FastAPI application entry point
+├── chat/                # Chat logic and LangChain integration
+│   ├── chains.py        # LangChain chains / pipelines
+│   ├── prompts.py       # System & user prompt templates
+│   └── schemas.py       # Pydantic request/response models
+├── config.py            # Settings & environment variables
+├── requirements.txt     # Python dependencies
+└── README.md
 ```
 
-## Installation
+> The exact structure in your repo may differ slightly, but the idea is the same: keep API, config, and LangChain logic separated.
+
+## Getting Started
 
 ### Prerequisites
+
 - Python 3.9+ (I'm using Python 3.13)
-- PostgreSQL database (for ticket storage)
-- MCP server running (e.g., ticketing MCP server)
+- An LLM provider API key (e.g. OpenAI, DeepSeek, etc.)
 
-### Setup
+### Installation
 
-1. Clone the repository:
+1. Clone the repository
+
 ```bash
 git clone <repository-url>
-cd mcp-client
+cd template-chatbot
 ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment (recommended)
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # on Windows: .venv\\Scripts\\activate
+```
+
+3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure environment variables:
+### Configuration
+
+Set the required environment variables (adapt to the LLM you use):
+
 ```bash
-# MCP Server Configuration
-export MCP_SERVER_URL="http://localhost:3000/sse"
-
-# Tool assignments for multi-agent setup
-export MCP_TOOLS__ASK="get_ticket_by_id,list_tickets,search_tickets"
-export MCP_TOOLS__CREATE="create_ticket,validate_ticket"
-export MCP_TOOLS__MODIFY="update_ticket,delete_ticket,update_ticket_status"
-
-# Langfuse (optional, for observability)
-export LANGFUSE_PUBLIC_KEY="your-key"
-export LANGFUSE_SECRET_KEY="your-secret"
-export LANGFUSE_HOST="https://cloud.langfuse.com"
-
-# LLM Configuration
-export OPENAI_API_KEY="your-openai-key"
-# or
+# LLM configuration
+export OPENAI_API_KEY="your-openai-key"           # or
 export DEEPSEEK_API_KEY="your-deepseek-key"
+
+# Optional: server config
+export APP_HOST="0.0.0.0"
+export APP_PORT="8000"
 ```
 
-4. Run the application:
+You can also centralize these in a `.env` file and load them in `config.py` using `python-dotenv` or Pydantic settings.
+
+## Running the Server
+
+Run the FastAPI app with Uvicorn (development mode):
+
 ```bash
-python main_client.py
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at `http://localhost:2707`
+The API will be available at `http://localhost:8000` and the interactive docs at:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## API
+
+### `POST /chat`
+
+Send a message to the chatbot and get a response.
+
+**Request body** (example):
+
+```json
+{
+  "message": "Hello, who are you?",
+  "session_id": "user-123"  // optional, for conversation memory
+}
+```
+
+**Response** (example):
+
+```json
+{
+  "status": "success",
+  "data": {
+    "final_answer": "hi"
+  }
+}
+```
+
+The actual Pydantic models live in `chat/schemas.py` and can be extended with extra fields (metadata, user id, language, etc.).
+
+## Customization Ideas
+
+- Add authentication (API key, JWT, OAuth)
+- Connect to a vector store and build a **RAG** chatbot
+- Add streaming responses using `StreamingResponse` or server‑sent events
+- Instrument logging / tracing (e.g. Langfuse, OpenTelemetry)
+- Package and deploy with Docker / Kubernetes / serverless
+
+## Development
+
+- Run formatters/linters (if configured), e.g. `ruff`, `black`, `mypy`
+- Add tests around your chat chains and FastAPI routes using `pytest` and `httpx`
+
+## License
+
+See [LICENSE](LICENSE) file for details.
 
 ## API Endpoints
 
@@ -189,15 +205,6 @@ data: {"type": "interrupt", "content": "interrupt received"}
 #### Continue Answer (Streaming)
 ```bash
 POST /single-agent/stream/continue-answer
-```
-
-### Multi-Agent Endpoints
-
-Similar structure as single-agent endpoints but prefixed with `/multi-agent/`.
-
-### Health Check
-```bash
-GET /health
 ```
 
 ## Usage Examples
@@ -355,14 +362,3 @@ For issues and questions:
 ## License
 
 See [LICENSE](LICENSE) file for details.
-
-## Roadmap
-
-- [ ] PostgreSQL checkpointer for production
-- [ ] Authentication and authorization
-- [ ] Rate limiting
-- [ ] Advanced ticket search with filters
-- [ ] Email notifications
-- [ ] Ticket attachments support
-- [ ] Analytics dashboard
-- [ ] Multi-tenant support
