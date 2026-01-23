@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from typing import List
+from typing import Dict, Any
 from langgraph.types import Command
 from langchain.messages import AIMessage
 from fastapi.responses import StreamingResponse
@@ -19,7 +19,7 @@ single_agent_router = APIRouter(
     prefix="/single-agent"
 )
 
-def get_single_agent(request: Request):
+def get_single_agent(request: Request) -> CompiledStateGraph:
     """Dependency to get tools from app context"""
     if not hasattr(request.app, 'context') or 'single_agent' not in request.app.context:
         raise HTTPException(
@@ -32,7 +32,7 @@ def get_single_agent(request: Request):
 async def generate_answer(
     payload: ChatbotParams,
     single_agent: CompiledStateGraph = Depends(get_single_agent)
-):
+) -> Dict[str, Any]:
     run_id = str(uuid.uuid4())
     
     try:
@@ -78,6 +78,13 @@ async def generate_answer(
                     "requires_approval": True
                 }
             }
+            
+        # # Print the conversation
+        # for message in response["messages"]:
+        #     if hasattr(message, 'pretty_print'):
+        #         message.pretty_print()
+        #     else:
+        #         print(f"{message.type}: {message.content}")
         
         if not final_ai_message:
             return {
@@ -87,7 +94,7 @@ async def generate_answer(
                     
         return {
             "status": "success",
-            "data": final_ai_message.content
+            "data": {"final_answer": final_ai_message.content}
         }
     except Exception as e:
         LOGGER.error(f"Error in generate_answer: {e}", exc_info=True)
@@ -100,7 +107,7 @@ async def generate_answer(
 async def continue_answer(
     payload: ChatbotParams,
     single_agent: CompiledStateGraph = Depends(get_single_agent)
-):
+) -> Dict[str, Any]:
     run_id = str(uuid.uuid4())
     
     try:
@@ -127,7 +134,7 @@ async def continue_answer(
                     
         return {
             "status": "success",
-            "data": final_ai_message.content
+            "data": {"final_answer": final_ai_message.content}
         }
     except Exception as e:
         return {
@@ -211,7 +218,7 @@ async def continue_stream_generator(
 async def stream_generate_answer(
     payload: ChatbotParams,
     single_agent: CompiledStateGraph = Depends(get_single_agent)
-):
+) -> StreamingResponse:
     try:
         return StreamingResponse(
             chat_stream_generator(
@@ -234,7 +241,7 @@ async def stream_generate_answer(
 async def stream_continue_answer(
     payload: ChatbotParams,
     single_agent: CompiledStateGraph = Depends(get_single_agent)
-):
+) -> StreamingResponse:
     try:
         return StreamingResponse(
             continue_stream_generator(
