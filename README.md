@@ -352,6 +352,10 @@ For issues and questions:
 - Check Langfuse traces for debugging
 - Review agent logs in `logs/` directory
 
+## License
+
+See [LICENSE](LICENSE) file for details.
+
 ## Roadmap
 
 - [ ] PostgreSQL checkpointer for production
