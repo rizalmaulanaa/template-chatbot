@@ -13,6 +13,8 @@ This project implements an AI-powered ticketing system that uses:
 
 The system supports both single-agent and multi-agent (supervisor) architectures, with capabilities for creating, reading, updating, and deleting tickets through natural language interactions.
 
+> **Related Repository**: For the MCP server-side implementation, see [mcp-server](https://github.com/project-anak-muda/mcp-server)
+
 ## Architecture
 
 ### Agent Types
@@ -342,10 +344,6 @@ See `requirements.txt` for full list.
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
-
-## License
-
-[Add your license here]
 
 ## Support
 
