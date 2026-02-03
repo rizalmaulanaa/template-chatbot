@@ -8,3 +8,4 @@ python-multipart==0.0.21
 langchain==1.2.4
 langgraph==1.0.6
 langchain-google-genai==4.2.0
+pinecone==8.0.0

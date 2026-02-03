@@ -48,3 +48,5 @@ SKILLS = [
 for skill in SKILLS:
     path_skill_md = f"{PATH}/services/skills/{skill['name']}.md"
     skill["content"] = read_skill_md(path_skill_md)
+
+MAX_REWRITE_ITERATIONS = int(os.getenv('MAX_REWRITE_ITERATIONS'))

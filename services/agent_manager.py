@@ -21,10 +21,10 @@ async def make_graph_single() -> CompiledStateGraph:
     
     single_agent = create_agent(
         model,
-        # tools=TOOLS,
+        tools=TOOLS,
         system_prompt=SINGLE_AGENT_SYSTEM_TEMPLATE,
         checkpointer=checkpointer,
-        middleware=middlewares,
+        # middleware=middlewares,
         # response_format=ParsingOutput
     )
 
