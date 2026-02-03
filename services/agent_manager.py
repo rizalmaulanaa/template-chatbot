@@ -6,6 +6,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from models.llm import get_model
 from services.tools import TOOLS
+from constants.params import ParsingOutput
 from services.middlewares.compile import get_middlewares
 from constants.prompt import SINGLE_AGENT_SYSTEM_TEMPLATE
 
@@ -17,13 +18,14 @@ async def make_graph_single() -> CompiledStateGraph:
     model = get_model()
     checkpointer = InMemorySaver()
     middlewares = get_middlewares([tool.name for tool in TOOLS])
-
+    
     single_agent = create_agent(
         model,
-        tools=TOOLS,
+        # tools=TOOLS,
         system_prompt=SINGLE_AGENT_SYSTEM_TEMPLATE,
         checkpointer=checkpointer,
-        middleware=middlewares
+        middleware=middlewares,
+        # response_format=ParsingOutput
     )
 
     return single_agent

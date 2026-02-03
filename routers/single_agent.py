@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 
 from constants.log import LOGGER
 from constants.params import ChatbotParams
+from utils.helpers import extract_agent_response
 
 
 single_agent_router = APIRouter(
@@ -47,58 +48,21 @@ async def generate_answer(
             {"messages": [{"role": "user", "content": payload.query}]},
             config=config
         )
+
+        # Extract and return the complete response
+        return extract_agent_response(response, payload.session_id, run_id)
         
-        # Check if there's an interrupt
-        interrupts = response.get('__interrupt__', [])
-        
-        # Get the final AI message
-        final_ai_message = next(
-            (msg for msg in reversed(response["messages"]) if isinstance(msg, AIMessage)),
-            None
-        )
-        
-        if interrupts:
-            interrupt_data = interrupts[0].value
-            action_requests = interrupt_data.get('action_requests', [])
-            
-            # Get the action details
-            action = action_requests[0] if action_requests else {}
-            
-            return {
-                "status": "interrupted",
-                "data": {
-                    "final_answer": final_ai_message.content,
-                    "message": f"About to execute: {action.get('name')}",
-                    "description": action.get('description'),
-                    "tool_name": action.get('name'),
-                    "tool_args": action.get('args'),
-                    "session_id": payload.session_id,
-                    "requires_approval": True
-                }
-            }
-            
-        # # Print the conversation
-        # for message in response["messages"]:
-        #     if hasattr(message, 'pretty_print'):
-        #         message.pretty_print()
-        #     else:
-        #         print(f"{message.type}: {message.content}")
-        
-        if not final_ai_message:
-            return {
-                "status": "error",
-                "data": {"final_answer": "No AI response found"}
-            }
-                    
-        return {
-            "status": "success",
-            "data": {"final_answer": final_ai_message.content}
-        }
     except Exception as e:
         LOGGER.error(f"Error in generate_answer: {e}", exc_info=True)
         return {
             "status": "error",
-            "data": {"final_answer": f"Found error with {e}"}
+            "data": {
+                "requires_approval": False,
+                "session_id": payload.session_id,
+                "run_id": run_id,
+                "error": str(e),
+                "final_answer": "Internal server error: {str(e)}"
+            }
         }
         
 @single_agent_router.post("/continue-answer")
@@ -124,19 +88,20 @@ async def continue_answer(
             config=config
         )
          
-        final_ai_message = next(
-            msg for msg in reversed(response["messages"])
-            if isinstance(msg, AIMessage)
-        )
-                    
-        return {
-            "status": "success",
-            "data": {"final_answer": final_ai_message.content}
-        }
+        # Extract and return the complete response
+        return extract_agent_response(response, payload.session_id, run_id)
+        
     except Exception as e:
+        LOGGER.error(f"Error in generate_answer: {e}", exc_info=True)
         return {
             "status": "error",
-            "data": {"final_answer" : f"Found error with {e}"}
+            "data": {
+                "requires_approval": False,
+                "session_id": payload.session_id,
+                "run_id": run_id,
+                "error": str(e),
+                "final_answer": "Internal server error: {str(e)}"
+            }
         }
         
 async def chat_stream_generator(
