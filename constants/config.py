@@ -38,6 +38,11 @@ PATH = '/'.join(str(PATH).split('/')[:-2])
 
 MIDDLEWARE_LIST_TOOLS = {}
 
+USED_MIDDLEWARE = [
+    'tool_call_limit',
+    'hitl'
+]
+
 SKILLS = [
     {
         "name": "ticketing_system",

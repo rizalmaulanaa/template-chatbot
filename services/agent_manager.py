@@ -1,5 +1,3 @@
-from typing import List
-from langchain.tools import BaseTool
 from langchain.agents import create_agent
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import InMemorySaver
@@ -24,7 +22,7 @@ async def make_graph_single() -> CompiledStateGraph:
         tools=TOOLS,
         system_prompt=SINGLE_AGENT_SYSTEM_TEMPLATE,
         checkpointer=checkpointer,
-        # middleware=middlewares,
+        middleware=middlewares,
         # response_format=ParsingOutput
     )
 
